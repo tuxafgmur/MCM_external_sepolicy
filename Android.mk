@@ -2,6 +2,12 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+ifeq ($(TARGET_BUILD_VARIANT),eng)
+SEPOLICY_BUILD_VARIANT := eng
+else
+SEPOLICY_BUILD_VARIANT := userdebug
+endif
+
 # SELinux policy version.
 # Must be <= /sys/fs/selinux/policyvers reported by the Android kernel.
 # Must be within the compatibility range reported by checkpolicy -V.
@@ -76,7 +82,7 @@ $(sepolicy_policy.conf): PRIVATE_MLS_CATS := $(MLS_CATS)
 $(sepolicy_policy.conf) : $(call build_policy, $(sepolicy_build_files))
 	@mkdir -p $(dir $@)
 	$(hide) m4 -D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
-		-D target_build_variant=$(TARGET_BUILD_VARIANT) \
+		-D target_build_variant=$(SEPOLICY_BUILD_VARIANT) \
 		-D shipping_build=$(CYNGN_TARGET) \
 		-s $^ > $@
 	$(hide) sed '/dontaudit/d' $@ > $@.dontaudit
@@ -104,7 +110,7 @@ $(sepolicy_policy_recovery.conf): PRIVATE_MLS_CATS := $(MLS_CATS)
 $(sepolicy_policy_recovery.conf) : $(call build_policy, $(sepolicy_build_files))
 	@mkdir -p $(dir $@)
 	$(hide) m4 -D mls_num_sens=$(PRIVATE_MLS_SENS) -D mls_num_cats=$(PRIVATE_MLS_CATS) \
-		-D target_build_variant=$(TARGET_BUILD_VARIANT) \
+		-D target_build_variant=$(SEPOLICY_BUILD_VARIANT) \
 		-D target_recovery=true \
 		-s $^ > $@
 
@@ -315,7 +321,7 @@ ALL_MAC_PERMS_FILES := $(call build_policy, $(LOCAL_MODULE))
 $(LOCAL_BUILT_MODULE) : $(mac_perms_keys.tmp) $(HOST_OUT_EXECUTABLES)/insertkeys.py $(ALL_MAC_PERMS_FILES)
 	@mkdir -p $(dir $@)
 	$(hide) DEFAULT_SYSTEM_DEV_CERTIFICATE="$(dir $(DEFAULT_SYSTEM_DEV_CERTIFICATE))" \
-		$(HOST_OUT_EXECUTABLES)/insertkeys.py -t $(TARGET_BUILD_VARIANT) -c $(TOP) $< -o $@ $(ALL_MAC_PERMS_FILES)
+		$(HOST_OUT_EXECUTABLES)/insertkeys.py -t $(SEPOLICY_BUILD_VARIANT) -c $(TOP) $< -o $@ $(ALL_MAC_PERMS_FILES)
 
 mac_perms_keys.tmp :=
 ##################################
